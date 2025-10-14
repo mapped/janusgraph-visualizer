@@ -1,0 +1,66 @@
+name: Sync Upstream and Create PR
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # every Monday at 3 AM UTC
+  workflow_dispatch: # allow manual run
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/ORIGINAL_ORG/PROJECT.git
+
+      - name: Fetch all branches
+        run: git fetch upstream && git fetch origin
+
+      - name: Update upstream-main
+        run: |
+          git checkout upstream-main || git checkout -b upstream-main
+          git rebase upstream/main || git merge upstream/main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git upstream-main --force
+
+      - name: Create or update sync branch
+        run: |
+          git checkout -B sync-upstream upstream-main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git sync-upstream --force
+
+      - name: Create Pull Request from upstream-main to custom-main
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: custom-main
+          branch: sync-upstream
+          title: "🔄 Sync upstream changes into custom-main"
+          body: |
+            This PR was automatically created to merge the latest changes from **upstream/main** into **custom-main**.
+
+            - Sync source: upstream/main
+            - Sync target: custom-main
+
+            Please review and merge if there are no conflicts.
+          labels: ["auto-sync", "upstream"]
+          draft: false
+          delete-branch: false
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin custom-main
+          if ! git merge-tree $(git merge-base origin/custom-main sync-upstream) origin/custom-main sync-upstream | grep -q '<<<<<<<'; then
+            echo "✅ No conflicts detected."
+          else
+            echo "❌ Conflicts detected between upstream-main and custom-main."
+            exit 1
+          fi
