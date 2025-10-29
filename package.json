@@ -27,7 +27,7 @@
   "overrides": {
     "@svgr/webpack": "6.2.1",
     "react-scripts": {
-      "postcss": "8.4.31"
+      "postcss": "8.5.6"
     },
     "follow-redirects": "^1.15.6",
     "webpack-dev-middleware": "^5.3.4"
