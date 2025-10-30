@@ -53,6 +53,6 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           file: ./Dockerfile
-          push: ${{ steps.vtl.outputs.docker_push }}
+          push: ${{ steps.vtl.outputs.docker_push || 'false' }}
           tags: ${{ steps.vtl.outputs.docker_tags }}
-          # labels: ${{ steps.vtl.outputs.oci_labels }}
+          labels: ${{ steps.vtl.outputs.oci_labels }}
