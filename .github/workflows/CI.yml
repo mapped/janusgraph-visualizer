@@ -21,8 +21,8 @@ jobs:
         with:
           baseVersion: 1.0.0
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          dockerImage: docker.io/janusgraph/janusgraph-visualizer
-      
+          dockerImage: ${{ env.DOCKER_IMAGE }}
+
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
